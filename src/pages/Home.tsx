@@ -137,11 +137,11 @@ export default function Home() {
       <section className="walkthrough">
         <ScrollReveal>
           <div className="walkthrough-head">
-            <p className="mono eyebrow">[ SEE IT WORK ]</p>
-            <h2 className="walkthrough-h">Five clicks to prove the app.</h2>
+            <p className="mono eyebrow">[ HOW IT WORKS ]</p>
+            <h2 className="walkthrough-h">Public to private in five steps.</h2>
             <p className="walkthrough-sub">
-              Each step lives on a real page in this app. Follow along in your wallet to end up 100 percent
-              dark, watching your own privacy score climb in real time.
+              A guided tour through what BLACKOUT actually does. Each step is a real page you can use right now.
+              Bring a Sepolia wallet and end up with a portfolio the chain cannot read.
             </p>
           </div>
         </ScrollReveal>
@@ -149,8 +149,8 @@ export default function Home() {
           {[
             {
               n: "01",
-              t: "Mint test tokens",
-              d: "Head to the faucet. Every mock underlying exposes a public mint function. One click gets you 100 USDC.",
+              t: "Fund the wallet",
+              d: "Mint mock underlyings from the built-in faucet. Every cToken has a corresponding ERC-20 with a public mint. No forms, no rate limits, no gas beyond your Sepolia ETH.",
               to: "/faucet",
             },
             {
@@ -167,14 +167,14 @@ export default function Home() {
             },
             {
               n: "04",
-              t: "Watch the score climb",
-              d: "The Portfolio scores your wallet 0 to 100 percent based on how much is sealed. Wrap more, score rises.",
+              t: "Measure the difference",
+              d: "The portfolio scores every position from 0 to 100 percent based on how much is sealed. It also flags leaking, mixed, and fully dark tokens so you know exactly where you stand.",
               to: "/portfolio",
             },
             {
               n: "05",
-              t: "Prove the difference",
-              d: "The Feed shows public transfers with amounts. Your wrap event shows sealed. Same chain, same block, one is visible and one is not.",
+              t: "See it on the chain",
+              d: "The surveillance feed shows recent transfers across every registered pair. Public transactions expose the full amount. Wraps and confidential moves show sealed. Same block, radically different privacy.",
               to: "/feed",
             },
           ].map((s, i) => (
