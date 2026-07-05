@@ -29,6 +29,7 @@ function classifyPair(p: PairInfo, dupSymbols: Set<string>): {
 export default function Registry() {
   const [pairs, setPairs] = useState<PairInfo[] | null>(null);
   const [filter, setFilter] = useState<"all" | "valid" | "revoked">("all");
+  const [search, setSearch] = useState("");
 
   useEffect(() => {
     let cancelled = false;
@@ -55,10 +56,21 @@ export default function Registry() {
 
   const filtered = useMemo(() => {
     if (!pairs) return null;
-    if (filter === "all") return pairs;
-    if (filter === "valid") return pairs.filter((p) => p.isValid);
-    return pairs.filter((p) => !p.isValid);
-  }, [pairs, filter]);
+    let list = pairs;
+    if (filter === "valid") list = list.filter((p) => p.isValid);
+    else if (filter === "revoked") list = list.filter((p) => !p.isValid);
+    const q = search.trim().toLowerCase();
+    if (q) {
+      list = list.filter((p) =>
+        p.underlyingSymbol.toLowerCase().includes(q) ||
+        p.wrapperSymbol.toLowerCase().includes(q) ||
+        p.underlyingName.toLowerCase().includes(q) ||
+        p.underlying.toLowerCase().includes(q) ||
+        p.wrapper.toLowerCase().includes(q),
+      );
+    }
+    return list;
+  }, [pairs, filter, search]);
 
   return (
     <main className="page">
@@ -88,10 +100,19 @@ export default function Registry() {
       </section>
 
       <div className="control-row" style={{ marginBottom: 24 }}>
-        <div className="xray-toggle" role="tablist" aria-label="filter registry">
-          <button className={filter === "all" ? "active" : ""} onClick={() => setFilter("all")}>all</button>
-          <button className={filter === "valid" ? "active" : ""} onClick={() => setFilter("valid")}>valid</button>
-          <button className={filter === "revoked" ? "active" : ""} onClick={() => setFilter("revoked")}>revoked</button>
+        <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
+          <div className="xray-toggle" role="tablist" aria-label="filter registry">
+            <button className={filter === "all" ? "active" : ""} onClick={() => setFilter("all")}>all</button>
+            <button className={filter === "valid" ? "active" : ""} onClick={() => setFilter("valid")}>valid</button>
+            <button className={filter === "revoked" ? "active" : ""} onClick={() => setFilter("revoked")}>revoked</button>
+          </div>
+          <input
+            className="search-input mono"
+            type="text"
+            placeholder="search symbol, name, or address"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
         </div>
         {pairs && (
           <p className="mono dim" style={{ fontSize: 12, letterSpacing: "0.16em" }}>
@@ -103,6 +124,10 @@ export default function Registry() {
       <section className="table-block wide">
         {!filtered ? (
           <p className="mono dim"><span className="spin" /> reading the registry...</p>
+        ) : filtered.length === 0 ? (
+          <p className="mono dim" style={{ padding: 40, textAlign: "center" }}>
+            no pairs match. clear the search or switch filters.
+          </p>
         ) : (
           <table className="pos-table wide">
             <thead>

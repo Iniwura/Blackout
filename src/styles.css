@@ -1186,3 +1186,39 @@ html, body { background: var(--void); color: var(--ink); font-family: var(--sans
   80%  { opacity: 0.32; }
   100% { transform: translateX(74px); opacity: 0; }
 }
+
+/* Search input (Registry + Feed) */
+.search-input {
+  background: var(--void);
+  border: 1px solid var(--seam);
+  color: var(--ink);
+  font-size: 12.5px;
+  padding: 10px 14px;
+  border-radius: 4px;
+  width: 260px;
+  letter-spacing: 0.04em;
+  transition: border-color 0.2s;
+}
+.search-input:focus { outline: none; border-color: var(--ink); }
+.search-input::placeholder { color: var(--mist); }
+
+/* View-on-etherscan link inside feed row */
+.feed-explorer {
+  display: inline-block;
+  margin-left: 12px;
+  color: var(--mist);
+  text-decoration: none;
+  font-size: 10.5px;
+  letter-spacing: 0.18em;
+  border-bottom: 1px solid transparent;
+  transition: color 0.2s, border-color 0.2s;
+  padding-bottom: 1px;
+}
+.feed-explorer:hover {
+  color: var(--ink);
+  border-color: var(--ink);
+}
+
+@media (max-width: 760px) {
+  .search-input { width: 100%; }
+}

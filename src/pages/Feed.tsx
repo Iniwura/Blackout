@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { fetchAllPairs, fetchRecentFeed, displayAmount, shortAddr, type FeedEvent, type PairInfo } from "../lib";
 
 export default function Feed() {
   const [pairs, setPairs] = useState<PairInfo[]>([]);
   const [events, setEvents] = useState<FeedEvent[] | null>(null);
+  const [search, setSearch] = useState("");
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -22,6 +23,18 @@ export default function Feed() {
     return () => { cancelled = true; };
   }, []);
 
+  const filtered = useMemo(() => {
+    if (!events) return null;
+    const q = search.trim().toLowerCase();
+    if (!q) return events;
+    return events.filter((e) =>
+      e.pair.underlyingSymbol.toLowerCase().includes(q) ||
+      e.pair.wrapperSymbol.toLowerCase().includes(q) ||
+      (e.from || "").toLowerCase().includes(q) ||
+      (e.to || "").toLowerCase().includes(q) ||
+      e.txHash.toLowerCase().includes(q),
+    );
+  }, [events, search]);
   const publicCount = events?.filter((e) => e.kind === "public-transfer").length ?? 0;
   const sealedCount = events?.filter((e) => e.kind !== "public-transfer").length ?? 0;
 
@@ -38,6 +51,17 @@ export default function Feed() {
           <span className="mono danger">[SEALED]</span>. Same block, two very different levels of privacy.
         </p>
       </section>
+
+      <div className="control-row" style={{ marginTop: 20, marginBottom: 20 }}>
+        <input
+          className="search-input mono"
+          type="text"
+          placeholder="search symbol, address, or tx hash"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          style={{ flex: 1, maxWidth: 480 }}
+        />
+      </div>
 
       <div className="mini-strip" style={{ marginTop: 20 }}>
         <div className="ministat">
@@ -61,7 +85,7 @@ export default function Feed() {
           <p className="mono dim">no recent activity. move some tokens through the vault to fill this.</p>
         ) : (
           <div className="feed-list">
-            {events.map((e, i) => (
+            {(filtered ?? events).map((e, i) => (
               <div className="feed-row" key={`${e.txHash}-${i}`}>
                 <span className={`feed-tag mono ${e.kind === "public-transfer" ? "leak" : "seal"}`}>
                   {e.kind === "public-transfer" ? "leak" : e.kind === "wrap" ? "wrap" : "sealed"}
@@ -77,6 +101,15 @@ export default function Feed() {
                 </div>
                 <span className={`feed-amt mono ${e.kind === "public-transfer" ? "danger" : "sealed"}`}>
                   {e.kind === "public-transfer" ? displayAmount(e.amount, e.pair) : "[ sealed ]"}
+                  <a
+                    className="feed-explorer mono"
+                    href={`https://sepolia.etherscan.io/tx/${e.txHash}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    title="View on Sepolia Etherscan"
+                  >
+                    view ↗
+                  </a>
                 </span>
               </div>
             ))}
