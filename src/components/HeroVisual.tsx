@@ -47,6 +47,12 @@ export default function HeroVisual() {
         <filter id="soft-glow">
           <feGaussianBlur stdDeviation="1.5" />
         </filter>
+        <pattern id="redaction-stripes" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+          <rect width="6" height="6" fill="#0a0a0a" />
+          <rect width="3" height="6" fill="#181818">
+            <animate attributeName="x" from="-3" to="6" dur="4s" repeatCount="indefinite" />
+          </rect>
+        </pattern>
       </defs>
 
       {/* Ambient cursor-following glow */}
@@ -55,15 +61,15 @@ export default function HeroVisual() {
       {/* Left column: raw public data (visible digits + values) */}
       <g className="hv-public" opacity="0.9">
         {[
-          { x: 40, y: 100, t: "0x8a4f...c3d1" },
-          { x: 40, y: 150, t: "value: 1,245.86 USDC" },
-          { x: 40, y: 200, t: "0xbeef...ffff" },
-          { x: 40, y: 250, t: "value: 89.4 WETH" },
-          { x: 40, y: 300, t: "0xdead...0001" },
-          { x: 40, y: 350, t: "value: 12,900 ZAMA" },
-          { x: 40, y: 400, t: "0xfeed...abcd" },
-          { x: 40, y: 450, t: "value: 314.15 XAUt" },
-          { x: 40, y: 500, t: "0xcafe...babe" },
+          { x: 30, y: 100, t: "0x8a4f...c3d1" },
+          { x: 30, y: 150, t: "value: 1,245.86 USDC" },
+          { x: 30, y: 200, t: "0xbeef...ffff" },
+          { x: 30, y: 250, t: "value: 89.4 WETH" },
+          { x: 30, y: 300, t: "0xdead...0001" },
+          { x: 30, y: 350, t: "value: 12,900 ZAMA" },
+          { x: 30, y: 400, t: "0xfeed...abcd" },
+          { x: 30, y: 450, t: "value: 314.15 XAUt" },
+          { x: 30, y: 500, t: "0xcafe...babe" },
         ].map((r, i) => (
           <text
             key={i}
@@ -87,7 +93,7 @@ export default function HeroVisual() {
           return (
             <path
               key={i}
-              d={`M 250 ${y} Q 450 ${y - 30}, 560 300`}
+              d={`M 220 ${y} Q 380 ${y - 30}, 540 310`}
               className="hv-stream"
               style={{ animationDelay: `${i * 0.2}s` }}
             />
@@ -102,14 +108,14 @@ export default function HeroVisual() {
             <animateMotion
               dur={`${3 + (i % 3)}s`}
               repeatCount="indefinite"
-              path={`M 250 ${100 + (i * 40) % 400} Q 450 ${70 + (i * 40) % 400}, 560 300`}
+              path={`M 220 ${100 + (i * 40) % 400} Q 380 ${70 + (i * 40) % 400}, 540 310`}
             />
           </circle>
         ))}
       </g>
 
       {/* The vault: an outlined hexagonal seal on the right */}
-      <g transform="translate(560 220)">
+      <g transform="translate(460 220)">
         <polygon
           points="80,0 155,45 155,135 80,180 5,135 5,45"
           fill="none"
@@ -147,31 +153,48 @@ export default function HeroVisual() {
 
       {/* Right column: sealed values (redaction bars) */}
       <g className="hv-sealed">
-        {Array.from({ length: 8 }).map((_, i) => (
-          <g key={i}>
-            <text
-              x="740"
-              y={130 + i * 50}
-              fill="#9d9890"
-              fontFamily="JetBrains Mono, monospace"
-              fontSize="10"
-              textAnchor="end"
-              letterSpacing="0.14em"
-            >
-              [SEALED]
-            </text>
-            <rect
-              x="670"
-              y={135 + i * 50}
-              width="60"
-              height="8"
-              fill="#161616"
-              stroke="#2b2b2b"
-              className="hv-bar"
-              style={{ animationDelay: `${1 + i * 0.15}s` }}
-            />
-          </g>
-        ))}
+        {Array.from({ length: 8 }).map((_, i) => {
+          const rowY = 120 + i * 50;
+          return (
+            <g key={i}>
+              {/* Label above the bar, like a caption */}
+              <text
+                x="655"
+                y={rowY}
+                fill="#9d9890"
+                fontFamily="JetBrains Mono, monospace"
+                fontSize="9"
+                textAnchor="start"
+                letterSpacing="0.24em"
+              >
+                [SEALED]
+              </text>
+              {/* Striped bar underneath */}
+              <rect
+                x="655"
+                y={rowY + 6}
+                width="80"
+                height="14"
+                fill="url(#redaction-stripes)"
+                stroke="#3a3a3a"
+                strokeWidth="0.6"
+                className="hv-bar"
+                style={{ animationDelay: `${1 + i * 0.15}s` }}
+              />
+              {/* Bright scanline that sweeps across, sells the "sealed" idea */}
+              <rect
+                x="655"
+                y={rowY + 6}
+                width="6"
+                height="14"
+                fill="#e8e6df"
+                opacity="0.14"
+                className="hv-scan"
+                style={{ animationDelay: `${i * 0.4}s` }}
+              />
+            </g>
+          );
+        })}
       </g>
 
       {/* Corner ticks - the classified-file frame */}
