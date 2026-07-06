@@ -30,13 +30,13 @@
 import type { Address } from "viem";
 
 export interface CustomPairEntry {
-  underlying: 0x9b5Cd13b8eFbB58Dc25A05CF411D8056058aDFfF;
-  wrapper: 0x0000000000000000000000000000000000000001;
+  underlying: Address;
+  wrapper: Address;
   /** Optional metadata overrides. Read from chain when omitted. */
-  underlyingSymbol?: TEST;
-  underlyingName?: Test Custom Pair;
+  underlyingSymbol?: string;
+  underlyingName?: string;
   /** Whether the underlying has a public mint the faucet can call. */
-  isFaucetable?: false;
+  isFaucetable?: boolean;
 }
 
 export const CUSTOM_PAIRS: CustomPairEntry[] = [
