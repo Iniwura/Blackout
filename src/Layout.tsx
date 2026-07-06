@@ -69,7 +69,7 @@ export default function Layout() {
                 <div className="more-menu" role="menu">
                   <NavLink to="/registry" role="menuitem">Registry</NavLink>
                   <NavLink to="/faucet" role="menuitem">Faucet</NavLink>
-                  <NavLink to="/reveal" role="menuitem">Reveal any token</NavLink>
+                  <NavLink to="/decrypt" role="menuitem">Decrypt any token</NavLink>
                 </div>
               )}
             </div>
@@ -99,7 +99,7 @@ export default function Layout() {
             <div className="mobile-divider" />
             <NavLink to="/registry">Registry</NavLink>
             <NavLink to="/faucet">Faucet</NavLink>
-            <NavLink to="/reveal">Reveal any token</NavLink>
+            <NavLink to="/decrypt">Decrypt any token</NavLink>
           </div>
         )}
 

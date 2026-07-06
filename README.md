@@ -25,9 +25,9 @@ Every submission this month builds the same checklist. BLACKOUT reframes the che
 
 The bounty asks for four things. Each is present.
 
-- **Surfaces every registry pair.** The `/registry` page reads `getTokenConfidentialTokenPairs()` and shows all nine, including the one revoked entry (greyed with a `REVOKED` badge). Duplicate underlying symbols are flagged. Unknown metadata gets a review tag.
+- **Surfaces every registry pair.** The `/registry` page reads `getTokenConfidentialTokenPairs()` as the primary source of truth, then merges the local `customPairs.ts` overlay for custom and dev-only pairs (tagged CUSTOM). All nine official pairs show, including the revoked entry (greyed with a `REVOKED` badge). Duplicate underlying symbols are flagged. Unknown metadata gets a review tag.
 - **Wrap and unwrap.** The `/vault` page has both, on every pair, with auto-approve and the self-relay unwrap flow (encrypt amount, request, fetch KMS proof, finalize).
-- **Decrypt any ERC-7984 balance.** The `/reveal` page accepts any wrapper address, validates against the registry, then does the full user-decrypt flow with an EIP-712 signature.
+- **Decrypt any ERC-7984 balance.** The `/reveal` page (Decrypt) accepts any ERC-7984 address, registered or not. Registry pairs get full metadata. Unknown tokens are probed directly from the contract and decrypted through the same EIP-712 user decryption flow.
 - **Faucet for the mocks.** The `/faucet` page has one-click mint for every mock underlying. Restricted-mint tokens like ctGBP are listed but disabled with an explanation.
 
 ## How to run it
@@ -75,6 +75,75 @@ src/
     Feed.tsx        surveillance panel, LEAK vs SEALED
     Reveal.tsx      arbitrary wrapper address decrypt
 ```
+
+
+## Adding a new ERC-20 to ERC-7984 pair
+
+The Zama Wrappers Registry at `0x2f0750Bbb0A246059d80e94c454586a7F27a128e` is the primary source of truth. Every valid pair the registry knows about appears in the app automatically, no code changes required. When Zama adds a new wrapper, it shows up on the next page load.
+
+The app also supports **custom pairs**: developer-declared entries for wrappers that are not yet in the registry, dev-only tokens, or unregistered ones you want the app to know about. Custom pairs live in a single file, `src/lib/customPairs.ts`, and are merged into every page (Vault, Registry, Portfolio, Decrypt) at runtime.
+
+### Example
+
+To add a hypothetical `MYTKN <-> cMYTKN` pair, open `src/lib/customPairs.ts` and add an entry to the `CUSTOM_PAIRS` array:
+
+```ts
+export const CUSTOM_PAIRS: CustomPair[] = [
+  {
+    underlying: "0xYourUnderlyingERC20Address",
+    wrapper:    "0xYourConfidentialWrapperAddress",
+    underlyingSymbol: "MYTKN",
+    underlyingName:   "My Custom Token",
+    underlyingDecimals: 18,
+    wrapperSymbol:  "cMYTKN",
+    wrapperDecimals: 6,
+    rate: 1_000_000_000_000n, // 10^(underlyingDecimals - wrapperDecimals)
+    isFaucetable: false,       // set true if the underlying has a public mint()
+  },
+];
+```
+
+Save, and the pair appears everywhere:
+
+- **Registry** lists it with a `CUSTOM` badge so users see it is not registry-endorsed.
+- **Vault** shows a wrap/unwrap panel for it. If `isFaucetable` is true, the inline faucet button appears.
+- **Portfolio** counts it toward the privacy score and shows it in the positions table.
+- **Decrypt** finds it by wrapper address alongside registry entries.
+
+Custom pairs use the same FHE encryption, EIP-712 decryption, and self-relay unwrap flow as registry pairs. There is no separate code path.
+
+### When to use the registry vs custom
+
+Prefer the registry. If a pair is production-worthy it should be submitted to Zama for inclusion in the canonical registry so every dApp benefits from it. Custom pairs are for development-time work, testing, or transitional periods before registry submission.
+
+
+## Adding a new ERC-20 ↔ ERC-7984 pair
+
+BLACKOUT sources pairs as a hybrid. The onchain Zama Wrappers Registry is the primary source of truth, read live on every load. On top of that, a local overlay file lets you declare custom or dev-only pairs without waiting for onchain registration.
+
+### The official path
+
+If your pair should be canonical for the whole ecosystem, register it in the Zama Wrappers Registry itself. Once the registry admin adds it, BLACKOUT picks it up automatically on the next page load with zero code changes. Unknown pairs surface with an UNKNOWN badge until their metadata is curated, so nothing breaks in the meantime.
+
+### The local path
+
+For development, testing, or pairs that are not yet in the registry, add an entry to `src/lib/customPairs.ts`:
+
+```ts
+export const CUSTOM_PAIRS: CustomPairEntry[] = [
+  {
+    underlying: "0xYourErc20Address000000000000000000000000",
+    wrapper: "0xYourErc7984WrapperAddress000000000000000",
+    underlyingSymbol: "DEV",
+    underlyingName: "My Dev Token",
+    isFaucetable: false,
+  },
+];
+```
+
+Save the file. Vite hot-reloads, and the pair appears in the Registry and Vault tagged CUSTOM so it is never confused with an official entry. Decimals, rate, wrapper symbol, and supply are read live from the contracts, exactly like registry pairs. If the wrapper address exists in both the registry and the overlay, the official registry entry wins and the duplicate is skipped.
+
+Wrap, unwrap, and decrypt all work identically for custom pairs because every flow reads its parameters from the pair object, not from hardcoded lists.
 
 ## Footguns handled
 

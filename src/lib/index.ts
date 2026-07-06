@@ -6,6 +6,7 @@ export * from "./config";
 export * from "./abi";
 export * from "./clients";
 export * from "./registry";
+export * from "./customPairs";
 export * from "./fhe";
 export * from "./actions";
 export * from "./events";

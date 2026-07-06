@@ -4,6 +4,7 @@
 
 import type { Address } from "viem";
 import { REGISTRY_ADDRESS, MOCK_UNDERLYINGS, RESTRICTED_UNDERLYINGS } from "./config";
+import { CUSTOM_PAIRS } from "./customPairs";
 import { REGISTRY_ABI, ERC20_ABI, WRAPPER_ABI } from "./abi";
 import { publicClient } from "./clients";
 
@@ -28,14 +29,17 @@ export interface PairInfo {
   isFaucetable: boolean;
   /** TVS: inferredTotalSupply on the wrapper, in underlying decimals. */
   tvs: bigint;
+  /** "registry" for pairs from the onchain registry; "custom" for user-declared. */
+  source: "registry" | "custom";
 }
 
 /**
- * Return all pairs from the registry (including revoked ones — the UI
- * decides whether to gray them out or hide). Uses one `getTokenConfidentialTokenPairs`
- * call then batches metadata reads via multicall.
+ * Return all pairs, merging the onchain registry (source of truth) with the
+ * developer-editable customPairs.ts list. Registry pairs come first; custom
+ * pairs get flagged with source: "custom" so the UI can badge them.
  */
 export async function fetchAllPairs(): Promise<PairInfo[]> {
+  const { CUSTOM_PAIRS } = await import("./customPairs");
   const client = publicClient();
   const pairs = (await client.readContract({
     address: REGISTRY_ADDRESS,
@@ -44,7 +48,32 @@ export async function fetchAllPairs(): Promise<PairInfo[]> {
   })) as readonly { tokenAddress: Address; confidentialTokenAddress: Address; isValid: boolean }[];
 
   const enriched = await Promise.all(pairs.map(async (p) => enrich(p.tokenAddress, p.confidentialTokenAddress, p.isValid)));
-  return enriched;
+
+  // Custom pairs pulled in as-is with source: "custom". TVS is read best-effort;
+  // if the wrapper does not expose inferredTotalSupply the read simply returns 0n.
+  const custom: PairInfo[] = await Promise.all(
+    CUSTOM_PAIRS.map(async (c) => {
+      const tvs = await client
+        .readContract({ address: c.wrapper, abi: WRAPPER_ABI, functionName: "inferredTotalSupply" })
+        .catch(() => 0n);
+      return {
+        underlying: c.underlying,
+        wrapper: c.wrapper,
+        isValid: true,
+        underlyingSymbol: c.underlyingSymbol,
+        underlyingName: c.underlyingName,
+        underlyingDecimals: c.underlyingDecimals,
+        wrapperSymbol: c.wrapperSymbol,
+        wrapperDecimals: c.wrapperDecimals,
+        rate: c.rate,
+        isFaucetable: c.isFaucetable,
+        tvs: tvs as bigint,
+        source: "custom" as const,
+      };
+    }),
+  );
+
+  return [...enriched, ...custom];
 }
 
 /** Look up a single wrapper's pair info by underlying address. */
@@ -69,8 +98,30 @@ export async function fetchPairForWrapper(wrapper: Address): Promise<PairInfo | 
     functionName: "getTokenAddress",
     args: [wrapper],
   })) as readonly [boolean, Address];
-  if (underlying === "0x0000000000000000000000000000000000000000") return null;
-  return enrich(underlying, wrapper, isValid);
+  if (underlying !== "0x0000000000000000000000000000000000000000") {
+    return enrich(underlying, wrapper, isValid);
+  }
+  // Fallback: is it in customPairs?
+  const { CUSTOM_PAIRS } = await import("./customPairs");
+  const match = CUSTOM_PAIRS.find((c) => c.wrapper.toLowerCase() === wrapper.toLowerCase());
+  if (!match) return null;
+  const tvs = await client
+    .readContract({ address: match.wrapper, abi: WRAPPER_ABI, functionName: "inferredTotalSupply" })
+    .catch(() => 0n);
+  return {
+    underlying: match.underlying,
+    wrapper: match.wrapper,
+    isValid: true,
+    underlyingSymbol: match.underlyingSymbol,
+    underlyingName: match.underlyingName,
+    underlyingDecimals: match.underlyingDecimals,
+    wrapperSymbol: match.wrapperSymbol,
+    wrapperDecimals: match.wrapperDecimals,
+    rate: match.rate,
+    isFaucetable: match.isFaucetable,
+    tvs: tvs as bigint,
+    source: "custom",
+  };
 }
 
 async function enrich(underlying: Address, wrapper: Address, isValid: boolean): Promise<PairInfo> {
@@ -101,6 +152,7 @@ async function enrich(underlying: Address, wrapper: Address, isValid: boolean): 
     rate: rate as bigint,
     isFaucetable,
     tvs: tvs as bigint,
+    source: "registry" as const,
   };
 }
 

@@ -11,17 +11,19 @@ function fmtTVS(tvs: bigint, dec: number, sym: string): string {
 }
 
 function classifyPair(p: PairInfo, dupSymbols: Set<string>): {
-  status: "valid" | "revoked" | "unknown";
+  status: "valid" | "revoked" | "unknown" | "custom";
   badges: { label: string; kind: "warn" | "danger" | "info" }[];
 } {
   const badges: { label: string; kind: "warn" | "danger" | "info" }[] = [];
   const key = p.underlying.toLowerCase();
   const known = key in MOCK_UNDERLYINGS || RESTRICTED_UNDERLYINGS.includes(key);
+  if (p.source === "custom") badges.push({ label: "custom", kind: "info" });
   if (!p.isValid) badges.push({ label: "revoked", kind: "danger" });
-  if (!known) badges.push({ label: "unknown", kind: "info" });
+  if (p.source === "registry" && !known) badges.push({ label: "unknown", kind: "info" });
   if (dupSymbols.has(p.underlyingSymbol.toLowerCase())) badges.push({ label: "dup symbol", kind: "warn" });
+  if (p.isCustom) badges.push({ label: "custom", kind: "info" });
   return {
-    status: !p.isValid ? "revoked" : !known ? "unknown" : "valid",
+    status: p.source === "custom" ? "custom" : !p.isValid ? "revoked" : !known ? "unknown" : "valid",
     badges,
   };
 }
@@ -177,6 +179,8 @@ export default function Registry() {
                                   ? "this pair is not in the app's known list; metadata came from the wrapper directly"
                                   : b.label === "dup symbol"
                                   ? "another pair shares this underlying symbol; check the address to identify the correct one"
+                                  : b.label === "custom"
+                                  ? "declared in the local customPairs.ts overlay, not the onchain registry"
                                   : ""
                               }
                             >
