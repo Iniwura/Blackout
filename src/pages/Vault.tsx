@@ -39,7 +39,7 @@ export default function Vault() {
 
   async function unmask(pair: PairInfo) {
     if (!address || !walletClient) return;
-    setBusy((b) => ({ ...b, [pair.wrapper]: "sign to reveal" }));
+    setBusy((b) => ({ ...b, [pair.wrapper]: "sign to decrypt" }));
     try {
       const clear = await decryptMyBalance(walletClient, address, pair.wrapper);
       setConfBalances((c) => ({ ...c, [pair.wrapper]: clear }));
@@ -201,7 +201,7 @@ export default function Vault() {
                             onClick={() => unmask(pair)}
                             disabled={!!status}
                           >
-                            reveal ↗
+                            decrypt ↗
                           </button>
                         ) : (
                           `${wrapperBalanceToUnderlying(conf, pair)} ${pair.underlyingSymbol.toLowerCase()}`

@@ -63,7 +63,7 @@ export default function Portfolio() {
           <span className="mega-outline">how dark are you?</span>
         </h1>
         <p className="page-copy">
-          A read of your positions across every registered pair. Public balances are always visible. Sealed balances require your signature to reveal. Click unmask everything to score the whole book.
+          A read of your positions across every registered pair. Public balances are always visible. Sealed balances require your signature to reveal. Click decrypt everything to score the whole book.
         </p>
       </section>
 
@@ -99,7 +99,7 @@ export default function Portfolio() {
                 </p>
               </div>
               <button className="cta-box small" onClick={unmaskAll} disabled={unmasking}>
-                <span>{unmasking ? "unmasking..." : "unmask everything"}</span>
+                <span>{unmasking ? "decrypting..." : "decrypt everything"}</span>
                 {!unmasking && <span className="cta-arrow">→</span>}
               </button>
             </div>

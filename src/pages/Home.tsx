@@ -162,7 +162,7 @@ export default function Home() {
             {
               n: "03",
               t: "Reveal only for you",
-              d: "Click reveal, sign the EIP-712 message. Your browser decrypts the balance locally. The chain never learned what you saw.",
+              d: "Click decrypt, sign the EIP-712 message. Your browser decrypts the balance locally. The chain never learned what you saw.",
               to: "/vault",
             },
             {
