@@ -13,7 +13,7 @@ import Portfolio from "./pages/Portfolio";
 import Registry from "./pages/Registry";
 import Faucet from "./pages/Faucet";
 import Feed from "./pages/Feed";
-import Reveal from "./pages/Reveal";
+import Decrypt from "./pages/Decrypt";
 import "./styles.css";
 
 const config = getDefaultConfig({
@@ -37,7 +37,7 @@ const router = createHashRouter([
       { path: "registry", element: <Registry /> },
       { path: "faucet", element: <Faucet /> },
       { path: "feed", element: <Feed /> },
-      { path: "reveal", element: <Reveal /> },
+      { path: "decrypt", element: <Decrypt /> },
     ],
   },
 ]);
