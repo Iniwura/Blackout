@@ -1,5 +1,7 @@
 import { NavLink, Outlet, useLocation } from "react-router-dom";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
+import { useAccount, useSwitchChain } from "wagmi";
+import { sepolia } from "wagmi/chains";
 import { useEffect, useState } from "react";
 import SideMarkers from "./components/SideMarkers";
 
@@ -20,6 +22,9 @@ function IconBurger({ open }: { open: boolean }) {
 }
 
 export default function Layout() {
+  const { isConnected, chainId } = useAccount();
+  const { switchChain } = useSwitchChain();
+  const wrongNetwork = isConnected && chainId !== sepolia.id;
   const location = useLocation();
   const [moreOpen, setMoreOpen] = useState(false);
   const [burgerOpen, setBurgerOpen] = useState(false);
@@ -77,7 +82,7 @@ export default function Layout() {
 
           <div className="top-actions">
             <div className="connect-shell">
-              <ConnectButton showBalance={false} accountStatus="address" chainStatus="none" />
+              <ConnectButton showBalance={false} accountStatus="address" chainStatus="full" />
             </div>
             <button
               className="burger"
@@ -89,6 +94,13 @@ export default function Layout() {
             </button>
           </div>
         </header>
+
+        {wrongNetwork && (
+          <div className="network-banner mono">
+            <span>wrong network. BLACKOUT runs on sepolia.</span>
+            <button onClick={() => switchChain({ chainId: sepolia.id })}>switch to sepolia</button>
+          </div>
+        )}
 
         {burgerOpen && (
           <div className="mobile-panel">

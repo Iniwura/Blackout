@@ -14,6 +14,12 @@ import {
   getConfidentialBalanceHandle,
 } from "./fhe";
 import { getAllowance, type PairInfo } from "./registry";
+import {
+  assertCorrectNetwork,
+  assertPositiveAmount,
+  assertSufficientUnderlying,
+  assertSupportedPair,
+} from "./guards";
 
 const ZERO_HANDLE = "0x0000000000000000000000000000000000000000000000000000000000000000";
 
@@ -32,6 +38,7 @@ export async function faucet(
   underlying: Address,
   amount: bigint,
 ): Promise<`0x${string}`> {
+  assertCorrectNetwork(walletClient.chain?.id);
   const hash = await walletClient.writeContract({
     address: underlying,
     abi: ERC20_ABI,
@@ -61,6 +68,12 @@ export async function wrap(
   amount: bigint,
   onStep?: (msg: string) => void,
 ): Promise<`0x${string}`> {
+  // Preflight guards: readable errors before any transaction is sent.
+  assertCorrectNetwork(walletClient.chain?.id);
+  assertSupportedPair(pair);
+  assertPositiveAmount(amount, "amount to wrap");
+  await assertSufficientUnderlying(pair, user, amount);
+
   // Skip approve if allowance already covers this amount.
   const existing = await getAllowance(pair.underlying, user, pair.wrapper);
   if (existing < amount) {
@@ -127,6 +140,10 @@ export async function requestUnwrap(
   amountInWrapperUnits: bigint,
   to?: Address,
 ): Promise<{ requestId: `0x${string}`; wrapHash: `0x${string}` }> {
+  assertCorrectNetwork(walletClient.chain?.id);
+  assertSupportedPair(pair);
+  assertPositiveAmount(amountInWrapperUnits, "amount to unwrap");
+
   const dest = to ?? user;
   const { handle, inputProof } = await encryptUint64(pair.wrapper, user, amountInWrapperUnits);
 
