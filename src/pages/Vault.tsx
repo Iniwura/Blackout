@@ -22,7 +22,13 @@ export default function Vault() {
   const [busy, setBusy] = useState<Record<string, string>>({});
   const [xray, setXray] = useState<XRay>("yours");
   const [goingDark, setGoingDark] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const [error, setError] = useState("");
+
+  const setCardErr = (wrapper: string, msg: string) =>
+    setErrors((e) => ({ ...e, [wrapper]: msg }));
+  const clearCardErr = (wrapper: string) =>
+    setErrors((e) => ({ ...e, [wrapper]: "" }));
 
   const load = useCallback(async () => {
     const all = await fetchAllPairs();
@@ -39,12 +45,13 @@ export default function Vault() {
 
   async function unmask(pair: PairInfo) {
     if (!address || !walletClient) return;
+    clearCardErr(pair.wrapper);
     setBusy((b) => ({ ...b, [pair.wrapper]: "sign to decrypt" }));
     try {
       const clear = await decryptMyBalance(walletClient, address, pair.wrapper);
       setConfBalances((c) => ({ ...c, [pair.wrapper]: clear }));
     } catch (e) {
-      setError(String(e instanceof Error ? e.message : e));
+      setCardErr(pair.wrapper, String(e instanceof Error ? e.message : e));
     } finally {
       setBusy((b) => ({ ...b, [pair.wrapper]: "" }));
     }
@@ -53,8 +60,8 @@ export default function Vault() {
   async function doWrap(pair: PairInfo) {
     if (!address || !walletClient) return;
     const raw = amounts[pair.wrapper];
-    if (!raw) return setError("enter an amount to wrap");
-    setError("");
+    if (!raw) return setCardErr(pair.wrapper, "enter an amount to wrap");
+    clearCardErr(pair.wrapper);
     try {
       const amt = parseUnderlying(raw, pair.underlyingDecimals);
       setBusy((b) => ({ ...b, [pair.wrapper]: "wrapping..." }));
@@ -64,7 +71,7 @@ export default function Vault() {
       await load();
       setConfBalances((c) => ({ ...c, [pair.wrapper]: null }));
     } catch (e) {
-      setError(String(e instanceof Error ? e.message : e));
+      setCardErr(pair.wrapper, String(e instanceof Error ? e.message : e));
     } finally {
       setBusy((b) => ({ ...b, [pair.wrapper]: "" }));
     }
@@ -73,8 +80,8 @@ export default function Vault() {
   async function doUnwrap(pair: PairInfo) {
     if (!address || !walletClient) return;
     const raw = amounts[pair.wrapper];
-    if (!raw) return setError("enter an amount to unwrap");
-    setError("");
+    if (!raw) return setCardErr(pair.wrapper, "enter an amount to unwrap");
+    clearCardErr(pair.wrapper);
     try {
       const amt = parseAsWrapperUnits(raw, pair.wrapperDecimals);
       setBusy((b) => ({ ...b, [pair.wrapper]: "requesting unwrap..." }));
@@ -85,7 +92,7 @@ export default function Vault() {
       await load();
       setConfBalances((c) => ({ ...c, [pair.wrapper]: null }));
     } catch (e) {
-      setError(String(e instanceof Error ? e.message : e));
+      setCardErr(pair.wrapper, String(e instanceof Error ? e.message : e));
     } finally {
       setBusy((b) => ({ ...b, [pair.wrapper]: "" }));
     }
@@ -114,14 +121,14 @@ export default function Vault() {
 
   async function useFaucet(pair: PairInfo) {
     if (!address || !walletClient || !pair.isFaucetable) return;
-    setError("");
+    clearCardErr(pair.wrapper);
     try {
       setBusy((b) => ({ ...b, [pair.wrapper]: `minting 100 ${pair.underlyingSymbol.toLowerCase()}...` }));
       const amt = parseUnderlying("100", pair.underlyingDecimals);
       await faucet(walletClient, address, pair.underlying, amt);
       await load();
     } catch (e) {
-      setError(String(e instanceof Error ? e.message : e));
+      setCardErr(pair.wrapper, String(e instanceof Error ? e.message : e));
     } finally {
       setBusy((b) => ({ ...b, [pair.wrapper]: "" }));
     }
@@ -248,6 +255,10 @@ export default function Vault() {
                       <span className="spin" />
                       {status}
                     </div>
+                  )}
+
+                  {errors[pair.wrapper] && (
+                    <div className="card-err mono">{errors[pair.wrapper]}</div>
                   )}
                 </div>
               );
