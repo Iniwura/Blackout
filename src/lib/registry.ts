@@ -4,7 +4,6 @@
 
 import type { Address } from "viem";
 import { REGISTRY_ADDRESS, MOCK_UNDERLYINGS, RESTRICTED_UNDERLYINGS } from "./config";
-import { CUSTOM_PAIRS } from "./customPairs";
 import { REGISTRY_ABI, ERC20_ABI, WRAPPER_ABI } from "./abi";
 import { publicClient } from "./clients";
 
